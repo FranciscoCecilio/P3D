@@ -76,8 +76,8 @@ public:
 	Ray PrimaryRay(const Vector& pixel_sample) //  Rays cast from the Eye to a pixel sample which is in Viewport coordinates
 	{
 		float imageAspectRatio = res_x / res_y;
-		float Px = (w * (pixel_sample.x / res_x));
-		float Py = (h * (pixel_sample.y / res_y));
+		float Px = (w * ((pixel_sample.x / res_x)-0.5));
+		float Py = (h * ((pixel_sample.y / res_y)-0.5));
 		float PZ = -plane_dist;
 		Vector vX = u * Px;
 		Vector vY = v * Py;

@@ -82,6 +82,7 @@ int WindowHandle = 0;
 Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medium 1 where the ray is travelling
 {
 	Color color = scene->GetBackgroundColor();
+	bool intercepts = false;
 	// if the scene has no objects
 	if (scene->getNumObjects() <= 0) return color;
 	float dist = FLT_MAX;
@@ -92,6 +93,7 @@ Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medi
 		Object* o = scene->getObject(i);
 		//cout << "trying " << i << "\n";
 		if (o->intercepts(ray, dist)) {
+			intercepts = true;
 			//cout << "hit " << i << "\n";
 			if (dist < closestDist) {
 				//cout << "old "<< closestDist;
@@ -101,38 +103,37 @@ Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medi
 			}
 		}
 	}
-	// if there are no intersections
-	if (closestObject == nullptr) {
-		//cout << "bkgnd\n";
+	if (!intercepts) {
 		return color;
 	}
-	
-	/**/
 	Vector hp = (ray.origin + ray.direction * closestDist);
 	Vector hpN = (closestObject->getNormal(hp)).normalize();
+	Vector sp = hp + hpN * 0.01;
+
+	color = Color(0.1, 0.1, 0);
 	for (int i = 0; i < scene->getNumLights(); i++) {
 		//cout << "\n BRUH1 \n";
 		Light* l = scene->getLight(i);
-		Vector L = (l->position - hp).normalize();
-		if (L * hpN > 0) {
-			Ray shadow = Ray(hp, L);
+		Vector L = (l->position - sp).normalize();
+		float cossAngIncidencia = L * hpN;
+
+		if ((cossAngIncidencia) > 0) {
+			Ray shadow = Ray(sp, L);
 			bool inShadow = false;
 			for (int i = 0; i < scene->getNumObjects(); i++) {
 				Object* o = scene->getObject(i);
-				if (o->intercepts(ray, dist)) {
+				if (o->intercepts(shadow, dist)) {
 					inShadow = true;
-					break;
 				}
 			}
 			if (!inShadow) {
-				//cout << "\n BRUH2 \n" ;
-				color = closestObject->GetMaterial()->GetDiffColor() + closestObject->GetMaterial()->GetSpecColor();
+				color += l->color*clamp(cossAngIncidencia,0,1);
+				color.clamp();
 			}
-			else {
-				color = Color(hpN.x, hpN.y, hpN.z);
-			}
+
 		}
 	}
+	color * (1/scene->getNumLights());
 
 	//if (depth >= maxDepth) return color;
 
