@@ -109,8 +109,9 @@ Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medi
 	Vector hp = (ray.origin + ray.direction * closestDist);
 	Vector hpN = (closestObject->getNormal(hp)).normalize();
 	Vector sp = hp + hpN * 0.01;
-
-	color = Color(0.1, 0.1, 0);
+	//TODO difuse and specular components of the color see next too do
+	Color diffuse = Color(0,0,0);
+	Color specular = Color(0, 0, 0);
 	for (int i = 0; i < scene->getNumLights(); i++) {
 		//cout << "\n BRUH1 \n";
 		Light* l = scene->getLight(i);
@@ -127,13 +128,18 @@ Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medi
 				}
 			}
 			if (!inShadow) {
-				color += l->color*clamp(cossAngIncidencia,0,1);
-				color.clamp();
+				//TODO fix this part bling phong stuffs
+
+				diffuse += l->color * 0.2 * closestObject->GetMaterial()->GetReflection() * std::max(0.f, cossAngIncidencia);
+				Vector halfvector = (L + hpN).normalize();
+				specular += l->color*0.2 * pow(max(0.f, (halfvector * (ray.direction * -1))), closestObject->GetMaterial()->GetSpecular()); 
 			}
 
 		}
 	}
-	color * (1/scene->getNumLights());
+
+	color = diffuse.clamp() * closestObject->GetMaterial()->GetDiffColor().clamp() + specular.clamp() * closestObject->GetMaterial()->GetSpecColor().clamp();
+	color.clamp();
 
 	//if (depth >= maxDepth) return color;
 
