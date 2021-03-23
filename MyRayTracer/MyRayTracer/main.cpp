@@ -127,19 +127,26 @@ Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medi
 			}
 			if (!inShadow) {
 				//add difuse
-				color += closestObject->GetMaterial()->GetDiffColor() * closestObject->GetMaterial()->GetDiffuse() * std::max(0.f, cossAngIncidencia);
+				color += l->color * closestObject->GetMaterial()->GetDiffColor() * closestObject->GetMaterial()->GetDiffuse() * std::max(0.f, cossAngIncidencia);
 				// calculate half way vector
-				Vector halfwayVector = (ray.direction + L).normalize();
+				Vector halfwayVector = (L-ray.direction).normalize();
 				//add specular
-				color += closestObject->GetMaterial()->GetSpecColor() * closestObject->GetMaterial()->GetSpecular() * pow(std::max(0.f,halfwayVector * hpN), closestObject->GetMaterial()->GetShine());
+				color += l->color * closestObject->GetMaterial()->GetSpecColor() * closestObject->GetMaterial()->GetSpecular() * pow(std::max(0.f,halfwayVector * hpN), closestObject->GetMaterial()->GetShine());
 			}
 
 		}
 	}
 	color = color.clamp();
 
-	//if (depth >= maxDepth) return color;
+	if (depth > 5) return color;
 
+	if (closestObject->GetMaterial()->GetReflection() > 0) {
+		Vector rDir = (hpN*(((ray.direction * -1) * hpN)*2)) - (ray.direction * -1);
+		Ray rRay = Ray(sp,rDir);
+		Color rColor = rayTracing(rRay, depth + 1, 1.0).clamp();
+		color += rColor +Color(1,1,1) *-closestObject->GetMaterial()->GetTransmittance();
+	}
+	color = color.clamp();
 	return color;
 
 	/*
