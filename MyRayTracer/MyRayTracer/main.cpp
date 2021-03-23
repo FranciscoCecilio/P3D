@@ -138,7 +138,7 @@ Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medi
 	}
 	color = color.clamp();
 
-	if (depth > 5) return color;
+	if (depth > 1) return color;
 
 	if (closestObject->GetMaterial()->GetReflection() > 0) {
 		Vector rDir = (hpN*(((ray.direction * -1) * hpN)*2)) - (ray.direction * -1);
