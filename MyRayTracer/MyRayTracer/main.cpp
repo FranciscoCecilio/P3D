@@ -81,7 +81,7 @@ int WindowHandle = 0;
 
 Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medium 1 where the ray is travelling
 {
-	Color color = scene->GetBackgroundColor();
+	Color color = Color(0, 0, 0);
 	bool intercepts = false;
 	// if the scene has no objects
 	if (scene->getNumObjects() <= 0) return color;
@@ -104,16 +104,14 @@ Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medi
 		}
 	}
 	if (!intercepts) {
+		color = scene->GetBackgroundColor();
 		return color;
 	}
 	Vector hp = (ray.origin + ray.direction * closestDist);
 	Vector hpN = (closestObject->getNormal(hp)).normalize();
-	Vector sp = hp + hpN * 0.01;
+	Vector sp = hp + hpN * 0.001;
 	//TODO difuse and specular components of the color see next too do
-	Color diffuse = Color(0,0,0);
-	Color specular = Color(0, 0, 0);
 	for (int i = 0; i < scene->getNumLights(); i++) {
-		//cout << "\n BRUH1 \n";
 		Light* l = scene->getLight(i);
 		Vector L = (l->position - sp).normalize();
 		float cossAngIncidencia = L * hpN;
@@ -128,18 +126,17 @@ Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medi
 				}
 			}
 			if (!inShadow) {
-				//TODO fix this part bling phong stuffs
-
-				diffuse += l->color * 0.2 * closestObject->GetMaterial()->GetReflection() * std::max(0.f, cossAngIncidencia);
-				Vector halfvector = (L + hpN).normalize();
-				specular += l->color*0.2 * pow(max(0.f, (halfvector * (ray.direction * -1))), closestObject->GetMaterial()->GetSpecular()); 
+				//add difuse
+				color += closestObject->GetMaterial()->GetDiffColor() * closestObject->GetMaterial()->GetDiffuse() * std::max(0.f, cossAngIncidencia);
+				// calculate half way vector
+				Vector halfwayVector = (ray.direction + L).normalize();
+				//add specular
+				color += closestObject->GetMaterial()->GetSpecColor() * closestObject->GetMaterial()->GetSpecular() * pow(std::max(0.f,halfwayVector * hpN), closestObject->GetMaterial()->GetShine());
 			}
 
 		}
 	}
-
-	color = diffuse.clamp() * closestObject->GetMaterial()->GetDiffColor().clamp() + specular.clamp() * closestObject->GetMaterial()->GetSpecColor().clamp();
-	color.clamp();
+	color = color.clamp();
 
 	//if (depth >= maxDepth) return color;
 
