@@ -115,11 +115,11 @@ Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medi
 	for (int i = 0; i < scene->getNumLights(); i++) {
 		Light* l = scene->getLight(i);
 		Vector L;
-		L = (l->position - sp).normalize();
-		/** /
+		//L = (l->position - sp).normalize();
+		/**/
 		Vector pos = Vector(
-			l->position.x + 0.5 * (0.3 + rand_float()) / 20,
-			l->position.y + 0.5 * (0.3 + rand_float()) / 20,
+			l->position.x + 0.5 * (0.3 + rand_float()) / 2,
+			l->position.y + 0.5 * (0.3 + rand_float()) / 2,
 			l->position.z);
 		L = (pos - hp).normalize();
 		/**/
@@ -402,7 +402,7 @@ void timer(int value)
 
 // Render function by primary ray casting from the eye towards the scene's objects
 
-constexpr auto AA = false;;
+constexpr auto AA = true;;
 
 void renderScene()
 {
@@ -423,18 +423,18 @@ void renderScene()
 			Vector pixel;  //viewport coordinates
 
 			if (AA) {
-				for (int i = 0; i < 20; i++) {
-					for (int j = 0; j < 20; j++) {
+				for (int i = 0; i < 2; i++) {
+					for (int j = 0; j < 2; j++) {
 
-						pixel.x = x + (i + rand_float()) / 20;
-						pixel.y = y + (i + rand_float()) / 20;
+						pixel.x = x + (i + rand_float()) / 2;
+						pixel.y = y + (i + rand_float()) / 2;
 
 						Ray ray = scene->GetCamera()->PrimaryRay(pixel);
 
 						color += rayTracing(ray, MAX_DEPTH, 1);
 					}
 				}
-				color = Color(color.r()/400, color.g() / 400, color.b() / 400);
+				color = Color(color.r()/4, color.g() / 4, color.b() / 4);
 			}
 
 			else {

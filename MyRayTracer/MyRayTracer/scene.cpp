@@ -44,7 +44,7 @@ bool Triangle::intercepts(Ray& r, float& t )
 	Vector V1 = points[2] - points[0];
 	normal = (V0 % V1);
 	float angle = normal * r.direction;
-	if (fabs(angle) < 0.00001) return false;
+	if (fabs(angle) < 0.000001) return false;
 
 	float D = normal * points[0];
 
