@@ -38,9 +38,39 @@ Vector Triangle::getNormal(Vector point)
 // Ray/Triangle intersection test using Tomas Moller-Ben Trumbore algorithm.
 //
 
-bool Triangle::intercepts(Ray& r, float& t ) {
+bool Triangle::intercepts(Ray& r, float& t )
+{
+	Vector V0 = points[1] - points[0];
+	Vector V1 = points[2] - points[0];
+	normal = (V0 % V1);
+	float angle = normal * r.direction;
+	if (fabs(angle) < 0.00001) return false;
 
-	return (false);
+	float D = normal * points[0];
+
+	t = (normal * r.origin) + D;
+	if (t < 0) return false;
+
+	Vector P = r.origin + r.direction * t;
+
+	Vector perp;
+
+	Vector ed0 = points[1] - points[0];
+	Vector vp0 = P - points[0];
+	perp = ed0 % vp0;
+	if (normal * perp < 0) return false;
+
+	Vector ed1 = points[2] - points[1];
+	Vector vp1 = P - points[1];
+	perp = ed1 % vp1;
+	if (normal * perp < 0) return false;
+
+	Vector ed2 = points[0] - points[2];
+	Vector vp2 = P - points[2];
+	perp = ed2 % vp2;
+	if (normal * perp < 0) return false;
+
+	return true;
 }
 
 Plane::Plane(Vector& a_PN, float a_D)
