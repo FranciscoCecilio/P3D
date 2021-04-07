@@ -93,6 +93,7 @@ bool Triangle::intercepts(Ray& r, float& t)
 {
 	Vector v0v1 = points[1] - points[0];
 	Vector v0v2 = points[2] - points[0];
+	normal = v0v1 % v0v2;
 	Vector pvec = r.direction % (v0v2);
 	float det = v0v1 * (pvec);
 	if (det < EPSILON) return false;
