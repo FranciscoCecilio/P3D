@@ -175,6 +175,8 @@ public:
 
 	bool load_p3f(const char *name);  //Load NFF file method
 	void create_random_scene();
+
+	void setLights(vector<Light*> newLights) { lights = newLights; }
 	
 private:
 	vector<Object *> objects;

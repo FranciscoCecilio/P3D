@@ -32,6 +32,13 @@
 
 #define MAX_DEPTH 4
 
+#define AA true
+#define SS true
+#define LJ 0.75
+#define JA 5
+
+
+
 unsigned int FrameCount = 0;
 
 // Current Camera Position
@@ -79,7 +86,7 @@ int RES_X, RES_Y;
 int WindowHandle = 0;
 
 
-Color rayTracing(Ray ray, int depth, float ior_1, bool inside = false)  //index of refraction of medium 1 where the ray is travelling
+Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool inside = false)  //index of refraction of medium 1 where the ray is travelling
 {
 	Color color = Color(0, 0, 0);
 	bool intercepts = false;
@@ -115,14 +122,17 @@ Color rayTracing(Ray ray, int depth, float ior_1, bool inside = false)  //index 
 	for (int i = 0; i < scene->getNumLights(); i++) {
 		Light* l = scene->getLight(i);
 		Vector L;
-		//L = (l->position - sp).normalize();
-		/**/
-		Vector pos = Vector(
-			l->position.x + 0.5 * (0.3 + rand_float()) / 2,
-			l->position.y + 0.5 * (0.3 + rand_float()) / 2,
-			l->position.z);
-		L = (pos - hp).normalize();
-		/**/
+		if (AA && SS) {
+			Vector pos = Vector(
+				l->position.x + LJ * (offx + rand_float()) / JA,
+				l->position.y + LJ * (offy + rand_float()) / JA,
+				l->position.z);
+			L = (pos - hp).normalize();
+		}
+		else {
+			L = (l->position - sp).normalize();
+		}
+
 		float cossAngIncidencia = L * hpN;
 
 		
@@ -163,7 +173,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, bool inside = false)  //index 
 	if (closestObject->GetMaterial()->GetReflection() > 0) {
 		Vector rr = vn * 2 - v;
 		Ray reflRay = Ray(sp,rr);
-		rColor = rayTracing(reflRay, depth + 1, ior_1).clamp();
+		rColor = rayTracing(reflRay, depth + 1, ior_1, offx, offy).clamp();
 		//rColor += closestObject->GetMaterial()->GetSpecColor() * -closestObject->GetMaterial()->GetReflection();
 	}
 
@@ -187,7 +197,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, bool inside = false)  //index 
 			Vector refrP = hp + rt * 0.00001;
 			Ray refrRay = Ray(refrP, rt);
 			float ior_2 = inside ? 1 : nt;
-			tColor = rayTracing(refrRay, depth + 1, ior_2, !inside).clamp();
+			tColor = rayTracing(refrRay, depth + 1, ior_2, offx, offy, !inside).clamp();
 			Rn = pow(fabs((ior_1 * vn.length() - ior_2 * cos0t) / (ior_1 * vn.length() + ior_2 * cos0t)), 2);
 			Rp = pow(fabs((ior_1 * cos0t - ior_2 * vn.length()) / (ior_1 * cos0t + ior_2 * vn.length())), 2);
 		}
@@ -387,8 +397,6 @@ void timer(int value)
 
 // Render function by primary ray casting from the eye towards the scene's objects
 
-constexpr auto AA = true;;
-
 void renderScene()
 {
 	int index_pos=0;
@@ -400,26 +408,45 @@ void renderScene()
 		scene->GetCamera()->SetEye(Vector(camX, camY, camZ));  //Camera motion
 	}
 	
+	if (!AA && SS) {
+		vector<Light*> new_lights;
+		float step = LJ / JA;
+		float start = -LJ / 2 + step / 2;
+		float end = LJ / 2;
+		int numL = scene->getNumLights();
+		for (int k = 0; k < numL; k++) {
+			Light* light = scene->getLight(k);
+			Color avg_col = light->color * (1 / (JA * JA));
+			for (float i = start; i < end; i += step) {
+				for (float j = start; j < end; j += step) {
+					Vector pos = Vector(light->position.x + i, light->position.y + j, light->position.z);
+					new_lights.push_back(new Light(pos, avg_col));
+				}
+			}
+		}
+		scene->setLights(new_lights);
+	}
+
 	for (int y = 0; y < RES_Y; y++)
 	{
 		for (int x = 0; x < RES_X; x++)
 		{
 			Color color = Color(0,0,0); 
-			Vector pixel;  //viewport coordinates
+			Vector pixel;
 
 			if (AA) {
-				for (int i = 0; i < 2; i++) {
-					for (int j = 0; j < 2; j++) {
+				for (int i = 0; i < JA; i++) {
+					for (int j = 0; j < JA; j++) {
 
-						pixel.x = x + (i + rand_float()) / 2;
-						pixel.y = y + (i + rand_float()) / 2;
+						pixel.x = x + (i + rand_float()) / JA;
+						pixel.y = y + (j + rand_float()) / JA;
 
 						Ray ray = scene->GetCamera()->PrimaryRay(pixel);
 
-						color += rayTracing(ray, 1, 1);
+						color += rayTracing(ray, 1, 1, i, j);
 					}
 				}
-				color = Color(color.r()/4, color.g() / 4, color.b() / 4);
+				color = Color(color.r() / (JA * JA), color.g() / (JA * JA), color.b() / (JA * JA));
 			}
 
 			else {
@@ -428,7 +455,7 @@ void renderScene()
 
 				Ray ray = scene->GetCamera()->PrimaryRay(pixel);
 
-				color = rayTracing(ray, 1, 1.0).clamp();
+				color = rayTracing(ray, 1, 1.0, 0, 0).clamp();
 
 			}
 
