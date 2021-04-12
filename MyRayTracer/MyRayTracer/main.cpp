@@ -79,7 +79,7 @@ int RES_X, RES_Y;
 int WindowHandle = 0;
 
 
-Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medium 1 where the ray is travelling
+Color rayTracing(Ray ray, int depth, float ior_1, bool inside = false)  //index of refraction of medium 1 where the ray is travelling
 {
 	Color color = Color(0, 0, 0);
 	bool intercepts = false;
@@ -149,6 +149,12 @@ Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medi
 	color = color.clamp();
 
 	if (depth > MAX_DEPTH) return color;
+
+
+	if (inside) {
+		hpN *= -1;
+	}
+
 	Vector v = ray.direction * -1;
 	Vector vn = hpN * ((v * hpN));
 	float Kr = closestObject->GetMaterial()->GetSpecular();
@@ -161,57 +167,36 @@ Color rayTracing(Ray ray, int depth, float ior_1)  //index of refraction of medi
 		//rColor += closestObject->GetMaterial()->GetSpecColor() * -closestObject->GetMaterial()->GetReflection();
 	}
 
-	if (closestObject->GetMaterial()->GetTransmittance() != 0) {
+
+	if (closestObject->GetMaterial()->GetTransmittance() == 0) {
+		Kr = closestObject->GetMaterial()->GetSpecular();
+	}
+	else {
 		//cout << "ENTROU? " << "\n";
 		Vector vt = vn - v;
 		float nt = closestObject->GetMaterial()->GetRefrIndex();
-		float refrRatio = ior_1 / nt;
+		float refrRatio = inside ? ior_1 : ior_1 / nt;
 		float sin0i = vt.length();
 		float sin0t = refrRatio * sin0i;
 		float cos0t = 1 - pow(sin0t, 2);
+		float Rn = 1, Rp = 1;
 		if (cos0t >= 0) {
 			cos0t = sqrt(cos0t);
 			Vector t = vt * (1 / vt.length());
 			Vector rt = (t * sin0t + hpN * -cos0t).normalize();
 			Vector refrP = hp + rt * 0.00001;
 			Ray refrRay = Ray(refrP, rt);
-			tColor = rayTracing(refrRay, depth + 1, ior_1).clamp();
+			float ior_2 = inside ? 1 : nt;
+			tColor = rayTracing(refrRay, depth + 1, ior_2, !inside).clamp();
+			Rn = pow(fabs((ior_1 * vn.length() - ior_2 * cos0t) / (ior_1 * vn.length() + ior_2 * cos0t)), 2);
+			Rp = pow(fabs((ior_1 * cos0t - ior_2 * vn.length()) / (ior_1 * cos0t + ior_2 * vn.length())), 2);
 		}
-		float Rn = pow(fabs((ior_1 * vn.length() - nt * cos0t) / (ior_1 * vn.length() + nt * cos0t)), 2);
-		float Rp = pow(fabs((ior_1 * cos0t - nt * vn.length()) / (ior_1 * cos0t + nt * vn.length())), 2);
 		Kr = 1 / 2 * (Rn + Rp);
 	}
 
 	color += rColor * Kr + tColor * (1 - Kr);
 	color = color.clamp();
 	return color;
-
-	/*
-	//intersect ray with all objects and find a hit point (if any) closest to the start of the ray
-	if (!intersection) return BACKGROUND;
-
-	else {
-		compute normal at the hit point;
-		for (each source light) {
-			L = unit light vector from hit point to light source;
-			if (L * normal > o) {
-				if (!point in shadow) {
-					color = diffuse color + specular color;
-				}
-			}
-		}
-
-		if (depth >= maxDepth) return color;
-
-		if (reflective object) {
-			rRay = calculate ray in the reflected direction;
-			rColor = trace(scene, point, rRay direction, depth+1);
-			reduce tColor by the transmittance coefficient and add to color;
-		}
-
-		return color;
-	}
-	*/
 }
 
 /////////////////////////////////////////////////////////////////////// ERRORS
@@ -431,7 +416,7 @@ void renderScene()
 
 						Ray ray = scene->GetCamera()->PrimaryRay(pixel);
 
-						color += rayTracing(ray, MAX_DEPTH, 1);
+						color += rayTracing(ray, 1, 1);
 					}
 				}
 				color = Color(color.r()/4, color.g() / 4, color.b() / 4);
