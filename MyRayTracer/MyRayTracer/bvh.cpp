@@ -121,6 +121,7 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 
 			// Check LocalRay intersection with Root (worldbox)
 			if (!currentNode->getAABB().intercepts(ray, tmp)) {
+				// No hit => return false
 				return false;
 			}
 
@@ -173,6 +174,7 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 					float t;
 					// For each primitive in leaf perform intersection testing
 					for (int i = currentNode->getIndex(); i < currentNode->getIndex() + currentNode->getNObjs(); i++) {
+						// Intersected = > update tclosest and store ClosestHit
 						if (objects[i]->intercepts(ray, t) && t < tmin) {
 							hit = true;
 							tmin = t;
@@ -214,15 +216,75 @@ bool BVH::Traverse(Ray& ray) {  //shadow ray with length
 			double length = ray.direction.length(); //distance between light and intersection point
 			ray.direction.normalize();
 
+			BVHNode* currentNode = nodes[0];
+
 			// CheckLocalRayintersectionwith Root(worldbox)
+			if (!currentNode->getAABB().intercepts(ray, tmp)) {
+				// No hit => return false
+				return false;
+			}
 
+			// For (infinity)
+			while (true) {
+				// If (NOT CurrentNode.isLeaf()) 
+				if (!currentNode->isLeaf()) {
+					// Intersection test with both child nodes
+					float tL, tR;
+					bool hitL, hitR;
+					BVHNode* leftNode = nodes[currentNode->getIndex()];
+					BVHNode* rightNode = nodes[currentNode->getIndex() + 1];
+					hitL = leftNode->getAABB().intercepts(ray, tL);
+					hitR = rightNode->getAABB().intercepts(ray, tR);
 
+					// Both nodes hit => Put right one on the stack. CurrentNode = left node
+					if (hitL && hitR) {
+						currentNode = leftNode;
+						hit_stack.push(StackItem(rightNode, tR));
+						// » GOTO LOOP
+						continue;
+					}
+					// Only one node hit => CurrentNode = hit node
+					else if (hitL) {
+						currentNode = leftNode;
+						// » GOTO LOOP
+						continue;
+					}
+					else if (hitR) {
+						currentNode = rightNode;
+						// » GOTO LOOP
+						continue;
+					}
+					// No Hit: Do nothing (let the stack-popping code below be reached)
+				}
+				// Else (Is leaf)
+				else {
+					float t;
+					// For each primitive in leaf perform intersection testing
+					for (int i = currentNode->getIndex(); i < currentNode->getIndex() + currentNode->getNObjs(); i++) {
+						// Intersected => return true;
+						if (objects[i]->intercepts(ray, t)) {
+							return true;
+						}
+					}
+				}
+				// EndIf
 
-
-
-
-
-
-
+				// Pop stack, CurrentNode = pop’d node
+				bool isPopd = false;
+				while (!hit_stack.empty()) {
+					StackItem popd = hit_stack.top();
+					hit_stack.pop();
+					isPopd = true;
+					currentNode = popd.ptr;
+				}
+				if (isPopd) {
+					continue;
+				}
+				// Stack is empty => return false
+				if (hit_stack.empty()) {
+					return false;
+				}
+			}
+			// EndFor
 			return false;
 	}		
