@@ -36,6 +36,7 @@
 #define SS true
 #define LJ 0.75
 #define JA 5
+#define DOF true
 
 
 
@@ -110,6 +111,15 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 			}
 		}
 	}
+	/** /
+	if (DOF) {
+		float minDepth = 4;
+		float maxDepth = 16;
+		float depth = 1 + (closestDist - minDepth) * (0 - 1) / (maxDepth - minDepth);
+		Color color = Color(depth, depth, depth).clamp();
+		return color;
+	}
+	/**/
 	if (!intercepts) {
 		color = scene->GetBackgroundColor();
 		return color;
@@ -433,6 +443,8 @@ void renderScene()
 		{
 			Color color = Color(0,0,0); 
 			Vector pixel;
+			Vector lens;
+			Ray* ray = nullptr;
 
 			if (AA) {
 				for (int i = 0; i < JA; i++) {
@@ -441,9 +453,16 @@ void renderScene()
 						pixel.x = x + (i + rand_float()) / JA;
 						pixel.y = y + (j + rand_float()) / JA;
 
-						Ray ray = scene->GetCamera()->PrimaryRay(pixel);
+						if (DOF) {
+							lens.x = (i + rand_float()) / JA;
+							lens.y = (j + rand_float()) / JA;
+							ray = &scene->GetCamera()->PrimaryRay(lens, pixel);
+						}
+						else {
+							ray = &scene->GetCamera()->PrimaryRay(pixel);
+						}
 
-						color += rayTracing(ray, 1, 1, i, j);
+						color += rayTracing(*ray, 1, 1, i, j);
 					}
 				}
 				color = Color(color.r() / (JA * JA), color.g() / (JA * JA), color.b() / (JA * JA));
