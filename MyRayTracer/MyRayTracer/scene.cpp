@@ -237,8 +237,84 @@ AABB aaBox::GetBoundingBox() {
 
 bool aaBox::intercepts(Ray& ray, float& t)
 {
+	float ox = ray.origin.x, oy = ray.origin.y, oz = ray.origin.z;
+	float dx = ray.direction.x, dy = ray.direction.y, dz = ray.direction.z;
+	float txmin, txmax, tymin, tymax, tzmin, tzmax;
+	float inv_dx = 1.0 / dx;
 
-	return (false);
+	if (inv_dx >= 0) {
+		txmin = (min.x - ox) * inv_dx;
+		txmax = (max.x - ox) * inv_dx;
+	}
+	else {
+		txmin = (max.x - ox) * inv_dx;
+		txmax = (min.x - ox) * inv_dx;
+	}
+	float inv_dy = 1.0 / dy;
+
+	if (inv_dy >= 0) {
+		tymin = (min.y - oy) * inv_dy;
+		tymax = (max.y - oy) * inv_dy;
+	}
+	else {
+		tymin = (max.y - oy) * inv_dy;
+		tymax = (min.y - oy) * inv_dy;
+	}
+	float inv_dz = 1.0 / dz;
+
+	if (inv_dz >= 0) {
+		tzmin = (min.z - oz) * inv_dz;
+		tzmax = (max.z - oz) * inv_dz;
+	}
+	else {
+		tzmin = (max.z - oz) * inv_dz;
+		tzmax = (min.z - oz) * inv_dz;
+	}
+
+	float t_in, t_out;
+	Vector face_in, face_out;
+
+	if (txmin > tymin) {
+		t_in = txmin;
+		face_in = (inv_dx >= 0.0) ? Vector(-1, 0, 0) : Vector(1, 0, 0);
+	}
+	else {
+		t_in = tymin;
+		face_in = (inv_dy >= 0.0) ? Vector(0, -1, 0) : Vector(0, 1, 0);
+	}
+	if (tzmin > t_in) {
+		t_in = tzmin;
+		face_in = (inv_dz >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
+	}
+
+	if (txmax < tymax) {
+		t_out = txmax;
+		face_out = (inv_dx >= 0.0) ? Vector(1, 0, 0) : Vector(-1, 0, 0);
+	}
+	else {
+		t_out = tymax;
+		face_out = (inv_dy >= 0.0) ? Vector(0, 1, 0) : Vector(0, -1, 0);
+	}
+	if (tzmax < t_out) {
+		t_out = tzmax;
+		face_out = (inv_dz >= 0.0) ? Vector(0, 0, 1) : Vector(0, 0, -1);
+	}
+
+	if (t_in < t_out && t_out > 0) {
+		if (t_in > 0) {
+			t = t_in;
+			Normal = face_in;
+		}
+		else
+		{
+			t = t_out;
+			Normal = face_out;
+		}
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 Vector aaBox::getNormal(Vector point)
