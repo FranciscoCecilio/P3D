@@ -64,6 +64,8 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 			BVHNode* currentNode = nodes[0];
 			
 			//PUT YOUR CODE HERE
+			return false;
+
 	}
 
 bool BVH::Traverse(Ray& ray) {  //shadow ray with length
@@ -73,4 +75,5 @@ bool BVH::Traverse(Ray& ray) {  //shadow ray with length
 			ray.direction.normalize();
 
 			//PUT YOUR CODE HERE
+			return false;
 	}		
