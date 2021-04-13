@@ -97,6 +97,12 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 	Object* closestObject = nullptr;
 	float closestDist = FLT_MAX;
 	//cout << "num obj " << scene->getNumObjects() << "\n";
+
+	if (acl_str == accel_struct::UGrid) {
+
+	}
+
+
 	for (int i = 0; i < scene->getNumObjects(); i++) {
 		Object* o = scene->getObject(i);
 		//cout << o << "\n";

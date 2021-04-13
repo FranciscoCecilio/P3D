@@ -46,11 +46,34 @@ void BVH::Build(vector<Object *> &objs) {
 		}
 
 void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
+	// First,check if the number of objects is fewer than the threshold
+	if (right_index - left_index <= Threshold) {
+		node->makeLeaf(left_index, right_index - left_index);
+	}
+	// Find which axis has the largest range of the centroids of the primitives’ aabb and sort the elements in that dimension
+	else {
+		Comparator cmp;
+		AABB nodeAABB = node->getAABB();
+		Vector dir = nodeAABB.max - nodeAABB.min;
+		if (dir.x >= dir.y && dir.x >= dir.z) {
+			cmp.dimension = 0;
+		}
+		else if (dir.y >= dir.x && dir.y >= dir.z) {
+			cmp.dimension = 1;
+		}
+		else {
+			cmp.dimension = 2;
+		}
+		std::sort(objects.begin() + left_index, objects.begin() + right_index, cmp);
+		float midPoint = (nodeAABB.max.getAxisValue(cmp.dimension) + nodeAABB.min.getAxisValue(cmp.dimension)) / 2;
+
+	}
+
 	   //PUT YOUR CODE HERE
 
 
-		//right_index, left_index and split_index refer to the indices in the objects vector
-	   // do not confuse with left_nodde_index and right_node_index which refer to indices in the nodes vector. 
+		// right_index, left_index and split_index refer to the indices in the objects vector
+		// do not confuse with left_nodde_index and right_node_index which refer to indices in the nodes vector. 
 	    // node.index can have a index of objects vector or a index of nodes vector
 			
 		
