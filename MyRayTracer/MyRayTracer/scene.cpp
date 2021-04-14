@@ -346,6 +346,10 @@ void Scene::addObject(Object* o)
 	objects.push_back(o);
 }
 
+vector<Object*>& Scene::getObjects()
+{
+	return objects;
+}
 
 Object* Scene::getObject(unsigned int index)
 {

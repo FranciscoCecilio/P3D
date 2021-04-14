@@ -167,6 +167,7 @@ public:
 
 	int getNumObjects( );
 	void addObject( Object* o );
+	vector<Object*>& getObjects();
 	Object* getObject( unsigned int index );
 	
 	int getNumLights( );

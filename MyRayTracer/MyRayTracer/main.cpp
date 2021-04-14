@@ -37,6 +37,10 @@
 #define LJ 0.75
 #define JA 5
 #define DOF true
+#define GA false //Grid Acceleration on/off
+
+Grid grid;
+
 
 
 
@@ -97,26 +101,45 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 	Object* closestObject = nullptr;
 	float closestDist = FLT_MAX;
 	//cout << "num obj " << scene->getNumObjects() << "\n";
+	Vector hp;
+	Vector hpN;
+	Vector sp;
+	 if(GA) {//if grid
+		 intercepts = grid.Traverse(ray, &closestObject, hp);
+		 if (!intercepts) {
+			 color = scene->GetBackgroundColor();
+			 return color;
+		 }
+		 hpN = (closestObject->getNormal(hp)).normalize();
+		 sp = hp + hpN * 0.01;
+	 }
 
-	if (acl_str == accel_struct::UGrid) {
+	 else {
+		 for (int i = 0; i < scene->getNumObjects(); i++) {
+			 Object* o = scene->getObject(i);
+			 //cout << o << "\n";
+			 if (o->intercepts(ray, dist)) {
+				 intercepts = true;
+				 //cout << "hit " << i << "\n";
+				 if (dist < closestDist) {
+					 //cout << "old "<< closestDist;
+					 closestDist = dist;
+					 //cout << " new "<< closestDist <<"\n";
+					 closestObject = o;
+				 }
+			 }
+		 }
 
-	}
-
-
-	for (int i = 0; i < scene->getNumObjects(); i++) {
-		Object* o = scene->getObject(i);
-		//cout << o << "\n";
-		if (o->intercepts(ray, dist)) {
-			intercepts = true;
-			//cout << "hit " << i << "\n";
-			if (dist < closestDist) {
-				//cout << "old "<< closestDist;
-				closestDist = dist;
-				//cout << " new "<< closestDist <<"\n";
-				closestObject = o;
-			}
-		}
-	}
+		 if (!intercepts) {
+			 color = scene->GetBackgroundColor();
+			 return color;
+		 }
+		 hp = (ray.origin + ray.direction * closestDist);
+		 //cout << closestDist << "\n";
+		 hpN = (closestObject->getNormal(hp)).normalize();
+		 sp = hp + hpN * 0.01;
+	 }
+	
 	/** /
 	if (DOF) {
 		float minDepth = 4;
@@ -126,6 +149,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 		return color;
 	}
 	/**/
+	/** /
 	if (!intercepts) {
 		color = scene->GetBackgroundColor();
 		return color;
@@ -133,8 +157,8 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 	Vector hp = (ray.origin + ray.direction * closestDist);
 	//cout << closestDist << "\n";
 	Vector hpN = (closestObject->getNormal(hp)).normalize();
-	Vector sp = hp + hpN * 0.001;
-
+	Vector sp = hp + hpN * 0.01;
+	/**/
 	for (int i = 0; i < scene->getNumLights(); i++) {
 		Light* l = scene->getLight(i);
 		Vector L;
@@ -155,10 +179,15 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 		if ((cossAngIncidencia) > 0) {
 			Ray shadow = Ray(sp, L);
 			bool inShadow = false;
-			for (int i = 0; i < scene->getNumObjects(); i++) {
-				Object* o = scene->getObject(i);
-				if (o->intercepts(shadow, dist)) {
-					inShadow = true;
+			if (GA) {
+				inShadow = grid.Traverse(shadow);
+			}
+			else {
+				for (int i = 0; i < scene->getNumObjects(); i++) {
+					Object* o = scene->getObject(i);
+					if (o->intercepts(shadow, dist)) {
+						inShadow = true;
+					}
 				}
 			}
 			if (!inShadow) {
@@ -764,6 +793,7 @@ void init_scene(void)
 		printf("Creating a Random Scene.\n\n");
 		scene->create_random_scene();
 	}
+	if (GA) grid.Build(scene->getObjects());
 	RES_X = scene->GetCamera()->GetResX();
 	RES_Y = scene->GetCamera()->GetResY();
 	printf("\nResolutionX = %d  ResolutionY= %d.\n", RES_X, RES_Y);
@@ -782,12 +812,14 @@ int main(int argc, char* argv[])
 		exit(0);
 	}
 	ilInit();
-
 	int ch;
 	if (!drawModeEnabled) {
 
 		do {
+			if (GA) grid = Grid();
 			init_scene();
+			
+			
 			auto timeStart = std::chrono::high_resolution_clock::now();
 			renderScene();  //Just creating an image file
 			auto timeEnd = std::chrono::high_resolution_clock::now();
