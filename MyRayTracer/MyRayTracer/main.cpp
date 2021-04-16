@@ -37,7 +37,7 @@
 #define LJ 0.75
 #define JA 5
 #define DOF true
-#define GA false //Grid Acceleration on/off
+#define GA true //Grid Acceleration on/off
 
 Grid grid;
 
@@ -141,26 +141,6 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 		 sp = hp + hpN * 0.01;
 	 }
 	
-
-	/** /
-	if (DOF) {
-		float minDepth = 4;
-		float maxDepth = 16;
-		float depth = 1 + (closestDist - minDepth) * (0 - 1) / (maxDepth - minDepth);
-		Color color = Color(depth, depth, depth).clamp();
-		return color;
-	}
-	/**/
-	/** /
-	if (!intercepts) {
-		color = scene->GetBackgroundColor();
-		return color;
-	}
-	Vector hp = (ray.origin + ray.direction * closestDist);
-	//cout << closestDist << "\n";
-	Vector hpN = (closestObject->getNormal(hp)).normalize();
-	Vector sp = hp + hpN * 0.01;
-	/**/
 	for (int i = 0; i < scene->getNumLights(); i++) {
 		Light* l = scene->getLight(i);
 		Vector L;
@@ -795,6 +775,9 @@ void init_scene(void)
 		printf("Creating a Random Scene.\n\n");
 		scene->create_random_scene();
 	}
+	printf("OLAAAA\n");
+	printf("aquiii\n");
+	printf("%d",scene->getNumObjects());
 	if (GA) grid.Build(scene->getObjects());
 	RES_X = scene->GetCamera()->GetResX();
 	RES_Y = scene->GetCamera()->GetResY();

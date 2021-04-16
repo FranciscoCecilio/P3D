@@ -29,7 +29,7 @@ Object* Grid::getObject(unsigned int index)
 
 // ---------------------------------------------setup_cells
 void Grid::Build(vector<Object*>& objs) {
-
+	printf("objs lenght: %d", objs.size());
 	int xmin, xmax;
 	int ymin, ymax;
 	int zmin, zmax;
@@ -45,7 +45,7 @@ void Grid::Build(vector<Object*>& objs) {
 		AABB o_bbox = obj->GetBoundingBox();
 		grid_bbox.extend(o_bbox);
 		this->addObject(obj);
-		objects.push_back(obj);  
+		//objects.push_back(obj);  ERROR
 	}
 	//slightly enlarge the grid box just for case
 	grid_bbox.min.x -= EPSILON; grid_bbox.min.y -= EPSILON; grid_bbox.min.z -= EPSILON;
@@ -72,10 +72,9 @@ void Grid::Build(vector<Object*>& objs) {
 	std::vector<Object*> obj_cell;
 	for (int i = 0; i < cellCount; i++) 
 		cells.push_back(obj_cell);   //each cell has an array with zero elements
-		
+
 	// insert the objects into the cells
 	for (auto &obj : objects) {   //vector iterator
-
 		AABB obb = obj->GetBoundingBox();
 
 		// Compute indices of both cells that contain min and max coord of obj bbox
@@ -85,7 +84,8 @@ void Grid::Build(vector<Object*>& objs) {
 		int ixmax = clamp((obb.max.x - bbox.min.x) * nx / (bbox.max.x - bbox.min.x), 0, nx - 1);
 		int iymax = clamp((obb.max.y - bbox.min.y) * ny / (bbox.max.y - bbox.min.y), 0, ny - 1);
 		int izmax = clamp((obb.max.z - bbox.min.z) * nz / (bbox.max.z - bbox.min.z), 0, nz - 1);
-
+		
+		printf("xmin: %d\n", iymax);
 		// add the object to the cells
 		for (int iz = izmin; iz <= izmax; iz++) 					// cells in z direction
 			for (int iy = iymin; iy <= iymax; iy++)					// cells in y direction
