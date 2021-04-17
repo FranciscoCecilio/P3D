@@ -16,8 +16,8 @@ Triangle::Triangle(Vector& P0, Vector& P1, Vector& P2)
 	normal.normalize();
 
 	//Calculate the Min and Max for bounding box
-	Min = Vector(+FLT_MAX, +FLT_MAX, +FLT_MAX);
-	Max = Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	Max = Vector(max(max(P0.x,P1.x),P2.x), max(max(P0.y, P1.y), P2.y), max(max(P0.z, P1.z), P2.z));
+	Min = Vector(min(min(P0.x, P1.x), P2.x), min(min(P0.y, P1.y), P2.y), min(min(P0.z, P1.z), P2.z));
 
 
 	// enlarge the bounding box a bit just in case...
@@ -37,58 +37,6 @@ Vector Triangle::getNormal(Vector point)
 //
 // Ray/Triangle intersection test using Tomas Moller-Ben Trumbore algorithm.
 //
-/*
-bool Triangle::intercepts(Ray& r, float& t)
-{
-	// compute plane's normal
-	Vector V0 = points[1] - points[0];
-	Vector V1 = points[2] - points[0];
-	// no need to normalize
-	Vector N = V0%V1; // N 
-	float area2 = N.length();
-
-	// Step 1: finding P
-
-	// check if ray and plane are parallel ?
-	float NdotRayDirection = N*(r.direction);
-	if (fabs(NdotRayDirection) < 0.000001) // almost 0 
-		return false; // they are parallel so they don't intersect ! 
-
-	// compute d parameter using equation 2
-	float d = N*(points[0]);
-
-	// compute t (equation 3)
-	t = (N*(r.origin) + d) / NdotRayDirection;
-	// check if the triangle is in behind the ray
-	if (t < 0) return false; // the triangle is behind 
-
-	// compute the intersection point using equation 1
-	Vector P = r.origin + r.direction * t;
-
-	// Step 2: inside-outside test
-	Vector C; // vector perpendicular to triangle's plane 
-
-	// edge 0
-	Vector edge0 = points[1] - points[0];
-	Vector vp0 = P - points[0];
-	C = edge0%(vp0);
-	if (N*C < 0) return false; // P is on the right side 
-
-	// edge 1
-	Vector edge1 = points[2] - points[1];
-	Vector vp1 = P - points[1];
-	C = edge1%(vp1);
-	if (N*C < 0)  return false; // P is on the right side 
-
-	// edge 2
-	Vector edge2 = points[0] - points[2];
-	Vector vp2 = P - points[2];
-	C = edge2%(vp2);
-	if (N*(C) < 0) return false; // P is on the right side; 
-
-	return true; // this ray hits the triangle 
-}*/
-
 bool Triangle::intercepts(Ray& r, float& t)
 {
 	Vector v0v1 = points[1] - points[0];
@@ -188,6 +136,13 @@ Vector Sphere::getNormal(Vector point)
 AABB Sphere::GetBoundingBox() {
 	Vector a_min;
 	Vector a_max ;
+	a_min.x = center.x - radius;
+	a_min.y = center.y - radius;
+	a_min.z = center.z - radius;
+
+	a_max.x = center.x + radius;
+	a_max.y = center.y + radius;
+	a_max.z = center.z + radius;
 	return(AABB(a_min, a_max));
 }
 

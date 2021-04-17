@@ -72,7 +72,7 @@ void Grid::Build(vector<Object*>& objs) {
 	std::vector<Object*> obj_cell;
 	for (int i = 0; i < cellCount; i++) 
 		cells.push_back(obj_cell);   //each cell has an array with zero elements
-
+	int countera = 0;
 	// insert the objects into the cells
 	for (auto &obj : objects) {   //vector iterator
 		AABB obb = obj->GetBoundingBox();
@@ -85,7 +85,8 @@ void Grid::Build(vector<Object*>& objs) {
 		int iymax = clamp((obb.max.y - bbox.min.y) * ny / (bbox.max.y - bbox.min.y), 0, ny - 1);
 		int izmax = clamp((obb.max.z - bbox.min.z) * nz / (bbox.max.z - bbox.min.z), 0, nz - 1);
 		
-		printf("xmin: %d\n", iymax);
+		printf("obj num:%d min=( %d,%d,%d) max=( %d,%d,%d)\n", countera, ixmin, iymin, izmin, ixmax, iymax, izmax);
+		countera++;
 		// add the object to the cells
 		for (int iz = izmin; iz <= izmax; iz++) 					// cells in z direction
 			for (int iy = iymin; iy <= iymax; iy++)					// cells in y direction
@@ -253,7 +254,6 @@ bool Grid::Traverse(Ray& ray, Object **hitobject, Vector& hitpoint) {
 	 
 	int 	ix_step, iy_step, iz_step;
 	int 	ix_stop, iy_stop, iz_stop;
-
 	//Calculate the initial cell as well as the ray parameter increments per cell in the x, y, and z directions
 	if (!Init_Traverse(ray, ix, iy, iz, dtx, dty, dtz, tx_next, ty_next, tz_next, ix_step, iy_step, iz_step, ix_stop, iy_stop, iz_stop))
 		return false;   //ray does not intersect the Grid bounding box
@@ -262,7 +262,6 @@ bool Grid::Traverse(Ray& ray, Object **hitobject, Vector& hitpoint) {
 	float closestDistance;
 	Object* closestObj = NULL;
 	float distance;
-	
 	while (true) {
 		objs = cells[ix + nx * iy + nx * ny * iz];
 
