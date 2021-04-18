@@ -32,20 +32,16 @@
 
 #define MAX_DEPTH 4
 
-#define AA true
-#define SS true
+#define AA false
+#define SS false
 #define LJ 0.75
-#define JA 5
-#define DOF true
-#define GA false //Grid Acceleration on/off
-#define BVHA true//Bounding vector hierachy acclaration on/off
-
+#define JA 4
+#define DOF false //Depth 
+#define GA false //Grid Acceleration
+#define BVHA true //Bounding volume hierarchy acceleration
 
 Grid grid;
 BVH bvh;
-
-
-
 
 unsigned int FrameCount = 0;
 
@@ -67,7 +63,7 @@ long myTime, timebase = 0, frame = 0;
 char s[32];
 
 //Enable OpenGL drawing.  
-bool drawModeEnabled = true;
+bool drawModeEnabled = false;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 
@@ -115,7 +111,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 			 return color;
 		 }
 		 hpN = (closestObject->getNormal(hp)).normalize();
-		 sp = hp + hpN * 0.01;
+		 sp = hp + hpN * EPSILON;
 	 }
 
 	 if (!GA && BVHA) {//if bvh
@@ -791,9 +787,9 @@ void init_scene(void)
 		printf("Creating a Random Scene.\n\n");
 		scene->create_random_scene();
 	}
-	printf("OLAAAA\n");
-	printf("aquiii\n");
-	printf("%d",scene->getNumObjects());
+	//printf("OLAAAA\n");
+	//printf("aquiii\n");
+	printf("%d objects",scene->getNumObjects());
 	if (GA && !BVHA) grid.Build(scene->getObjects());
 	if (!GA && BVHA) bvh.Build(scene->getObjects());
 	RES_X = scene->GetCamera()->GetResX();
