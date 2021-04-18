@@ -21,7 +21,7 @@
 #include <IL/il.h>
 
 #include "scene.h"
-#include "grid.h"
+#include "rayAccelerator.h"
 #include "maths.h"
 #include "sampler.h"
 
@@ -37,9 +37,12 @@
 #define LJ 0.75
 #define JA 5
 #define DOF true
-#define GA true //Grid Acceleration on/off
+#define GA false //Grid Acceleration on/off
+#define BVHA true//Bounding vector hierachy acclaration on/off
+
 
 Grid grid;
+BVH bvh;
 
 
 
@@ -105,8 +108,18 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 	Vector hp;
 	Vector hpN;
 	Vector sp;
-	 if(GA) {//if grid
+	 if(GA && !BVHA) {//if grid
 		 intercepts = grid.Traverse(ray, &closestObject, hp);
+		 if (!intercepts) {
+			 color = scene->GetBackgroundColor();
+			 return color;
+		 }
+		 hpN = (closestObject->getNormal(hp)).normalize();
+		 sp = hp + hpN * 0.01;
+	 }
+
+	 if (!GA && BVHA) {//if bvh
+		 intercepts = bvh.Traverse(ray, &closestObject, hp);
 		 if (!intercepts) {
 			 color = scene->GetBackgroundColor();
 			 return color;
@@ -161,8 +174,11 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 		if ((cossAngIncidencia) > 0) {
 			Ray shadow = Ray(sp, L);
 			bool inShadow = false;
-			if (GA) {
+			if (GA && !BVHA) {
 				inShadow = grid.Traverse(shadow);
+			}
+			if (!GA && BVHA) {
+				inShadow = bvh.Traverse(shadow);
 			}
 			else {
 				for (int i = 0; i < scene->getNumObjects(); i++) {
@@ -778,7 +794,8 @@ void init_scene(void)
 	printf("OLAAAA\n");
 	printf("aquiii\n");
 	printf("%d",scene->getNumObjects());
-	if (GA) grid.Build(scene->getObjects());
+	if (GA && !BVHA) grid.Build(scene->getObjects());
+	if (!GA && BVHA) bvh.Build(scene->getObjects());
 	RES_X = scene->GetCamera()->GetResX();
 	RES_Y = scene->GetCamera()->GetResY();
 	printf("\nResolutionX = %d  ResolutionY= %d.\n", RES_X, RES_Y);
@@ -798,10 +815,12 @@ int main(int argc, char* argv[])
 	}
 	ilInit();
 	int ch;
+	if (GA && !BVHA) grid = Grid();
+	if (!GA && BVHA) bvh = BVH();
 	if (!drawModeEnabled) {
 
 		do {
-			if (GA) grid = Grid();
+			
 			init_scene();
 			
 			
