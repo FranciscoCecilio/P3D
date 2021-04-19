@@ -111,6 +111,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 	 if(GA && !BVHA) {//if grid
 		 intercepts = grid.Traverse(ray, &closestObject, hp);
 		 if (!intercepts) {
+			 if (scene->GetSkyBoxFlg()) return scene->GetSkyboxColor(ray);
 			 color = scene->GetBackgroundColor();
 			 return color;
 		 }
@@ -121,6 +122,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 	 if (!GA && BVHA) {//if bvh
 		 intercepts = bvh.Traverse(ray, &closestObject, hp);
 		 if (!intercepts) {
+			 if (scene->GetSkyBoxFlg()) return scene->GetSkyboxColor(ray);
 			 color = scene->GetBackgroundColor();
 			 return color;
 		 }
@@ -145,6 +147,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 		 }
 
 		 if (!intercepts) {
+			 if (scene->GetSkyBoxFlg()) return scene->GetSkyboxColor(ray);
 			 color = scene->GetBackgroundColor();
 			 return color;
 		 }
