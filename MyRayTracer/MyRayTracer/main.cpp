@@ -32,13 +32,14 @@
 
 #define MAX_DEPTH 4
 
-#define AA false
-#define SS false
-#define LJ 0.75
-#define JA 4
-#define DOF false //Depth 
-#define GA false //Grid Acceleration
-#define BVHA true //Bounding volume hierarchy acceleration
+#define AA false // Anti-Aliasing
+#define SS false // Soft Shadows
+#define LJ 0.5 // Light Jitter
+#define SPP 2 // Samples Per Pixel
+#define DOF false // Depth Of Field
+#define GA false // Grid Acceleration
+#define BVHA true // Bounding Volume Hierarchy Acceleration
+#define SB true // SkyBox
 
 Grid grid;
 BVH bvh;
@@ -99,7 +100,6 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 	float dist = FLT_MAX;
 	Object* closestObject = nullptr;
 	float closestDist = FLT_MAX;
-	//cout << "num obj " << scene->getNumObjects() << "\n";
 
 	Vector hp;
 	Vector hpN;
@@ -107,7 +107,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 	 if(GA && !BVHA) {//if grid
 		 intercepts = grid.Traverse(ray, &closestObject, hp);
 		 if (!intercepts) {
-			 if (scene->GetSkyBoxFlg()) return scene->GetSkyboxColor(ray);
+			 if (SB) return scene->GetSkyboxColor(ray);
 			 color = scene->GetBackgroundColor();
 			 return color;
 		 }
@@ -118,39 +118,34 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 	 if (!GA && BVHA) {//if bvh
 		 intercepts = bvh.Traverse(ray, &closestObject, hp);
 		 if (!intercepts) {
-			 if (scene->GetSkyBoxFlg()) return scene->GetSkyboxColor(ray);
+			 if (SB) return scene->GetSkyboxColor(ray);
 			 color = scene->GetBackgroundColor();
 			 return color;
 		 }
 		 hpN = (closestObject->getNormal(hp)).normalize();
-		 sp = hp + hpN * 0.01;
+		 sp = hp + hpN * EPSILON;
 	 }
 
 	 else {
 		 for (int i = 0; i < scene->getNumObjects(); i++) {
 			 Object* o = scene->getObject(i);
-			 //cout << o << "\n";
 			 if (o->intercepts(ray, dist)) {
 				 intercepts = true;
-				 //cout << "hit " << i << "\n";
 				 if (dist < closestDist) {
-					 //cout << "old "<< closestDist;
 					 closestDist = dist;
-					 //cout << " new "<< closestDist <<"\n";
 					 closestObject = o;
 				 }
 			 }
 		 }
 
 		 if (!intercepts) {
-			 if (scene->GetSkyBoxFlg()) return scene->GetSkyboxColor(ray);
+			 if (SB) return scene->GetSkyboxColor(ray);
 			 color = scene->GetBackgroundColor();
 			 return color;
 		 }
 		 hp = (ray.origin + ray.direction * closestDist);
-		 //cout << closestDist << "\n";
 		 hpN = (closestObject->getNormal(hp)).normalize();
-		 sp = hp + hpN * 0.01;
+		 sp = hp + hpN * EPSILON;
 	 }
 	
 	for (int i = 0; i < scene->getNumLights(); i++) {
@@ -158,8 +153,8 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 		Vector L;
 		if (AA && SS) {
 			Vector pos = Vector(
-				l->position.x + LJ * (offx + rand_float()) / JA,
-				l->position.y + LJ * (offy + rand_float()) / JA,
+				l->position.x + LJ * (offx + rand_float()) / SPP,
+				l->position.y + LJ * (offy + rand_float()) / SPP,
 				l->position.z);
 			L = (pos - hp).normalize();
 		}
@@ -216,7 +211,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 		Vector rr = vn * 2 - v;
 		Ray reflRay = Ray(sp,rr);
 		rColor = rayTracing(reflRay, depth + 1, ior_1, offx, offy).clamp();
-		//rColor += closestObject->GetMaterial()->GetSpecColor() * -closestObject->GetMaterial()->GetReflection();
+		//rColor += closestObject->GetMaterial()->GetSpecColor();
 	}
 
 
@@ -224,7 +219,6 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 		Kr = closestObject->GetMaterial()->GetSpecular();
 	}
 	else {
-		//cout << "ENTROU? " << "\n";
 		Vector vt = vn - v;
 		float nt = closestObject->GetMaterial()->GetRefrIndex();
 		float refrRatio = inside ? ior_1 : ior_1 / nt;
@@ -236,7 +230,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 			cos0t = sqrt(cos0t);
 			Vector t = vt * (1 / vt.length());
 			Vector rt = (t * sin0t + hpN * -cos0t).normalize();
-			Vector refrP = hp + rt * 0.00001;
+			Vector refrP = hp + rt * EPSILON;
 			Ray refrRay = Ray(refrP, rt);
 			float ior_2 = inside ? 1 : nt;
 			tColor = rayTracing(refrRay, depth + 1, ior_2, offx, offy, !inside).clamp();
@@ -452,13 +446,13 @@ void renderScene()
 	
 	if (!AA && SS) {
 		vector<Light*> new_lights;
-		float step = LJ / JA;
+		float step = LJ / SPP;
 		float start = -LJ / 2 + step / 2;
 		float end = LJ / 2;
 		int numL = scene->getNumLights();
 		for (int k = 0; k < numL; k++) {
 			Light* light = scene->getLight(k);
-			Color avg_col = light->color * (1 / (JA * JA));
+			Color avg_col = light->color * (1 / (SPP * SPP));
 			for (float i = start; i < end; i += step) {
 				for (float j = start; j < end; j += step) {
 					Vector pos = Vector(light->position.x + i, light->position.y + j, light->position.z);
@@ -479,15 +473,15 @@ void renderScene()
 			Ray* ray = nullptr;
 
 			if (AA) {
-				for (int i = 0; i < JA; i++) {
-					for (int j = 0; j < JA; j++) {
+				for (int i = 0; i < SPP; i++) {
+					for (int j = 0; j < SPP; j++) {
 
-						pixel.x = x + (i + rand_float()) / JA;
-						pixel.y = y + (j + rand_float()) / JA;
+						pixel.x = x + (i + rand_float()) / SPP;
+						pixel.y = y + (j + rand_float()) / SPP;
 
 						if (DOF) {
-							lens.x = (i + rand_float()) / JA;
-							lens.y = (j + rand_float()) / JA;
+							lens.x = (i + rand_float()) / SPP;
+							lens.y = (j + rand_float()) / SPP;
 							ray = &scene->GetCamera()->PrimaryRay(lens, pixel);
 						}
 						else {
@@ -497,7 +491,7 @@ void renderScene()
 						color += rayTracing(*ray, 1, 1, i, j);
 					}
 				}
-				color = Color(color.r() / (JA * JA), color.g() / (JA * JA), color.b() / (JA * JA));
+				color = Color(color.r() / (SPP * SPP), color.g() / (SPP * SPP), color.b() / (SPP * SPP));
 			}
 
 			else {

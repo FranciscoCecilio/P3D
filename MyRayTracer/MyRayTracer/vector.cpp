@@ -61,7 +61,13 @@ Vector Vector::operator/( float f )
 
 Vector&	Vector::normalize	()
 {
-				   float l=1.0/this->length();
+	float l = this->length();
+	if (l == 0) {
+		l = 0;
+	}
+	else {
+		l = 1.0 / l;
+	}
 				   x *= l; y *= l; z *= l;
 				   return *this;
 }

@@ -39,6 +39,7 @@ Vector Triangle::getNormal(Vector point)
 //
 bool Triangle::intercepts(Ray& r, float& t)
 {
+	/** /
 	Vector v0v1 = points[1] - points[0];
 	Vector v0v2 = points[2] - points[0];
 	normal = v0v1 % v0v2;
@@ -60,6 +61,39 @@ bool Triangle::intercepts(Ray& r, float& t)
 	t = v0v2 * (qvec) * invDet;
 
 	return true;
+	/**/
+	Vector v0v1 = points[1] - points[0];
+	Vector v0v2 = points[2] - points[0];
+	normal = v0v1 % v0v2;
+	const float eps = 0.0000001;
+	Vector vertex0 = points[0];
+	Vector vertex1 = points[1];
+	Vector vertex2 = points[2];
+	Vector edge1, edge2, h, s, q;
+	float a, f, u, v;
+	edge1 = vertex1 - vertex0;
+	edge2 = vertex2 - vertex0;
+	h = r.direction % edge2;
+	a = edge1 * h;
+	if (a > -eps && a < eps)
+		return false;    // This ray is parallel to this triangle.
+	f = 1.0 / a;
+	s = r.origin - vertex0;
+	u = (s * h) * f;
+	if (u < 0.0 || u > 1.0)
+		return false;
+	q = s % edge1;
+	v = (r.direction * q) * f;
+	if (v < 0.0 || u + v > 1.0)
+		return false;
+	// At this stage we can compute t to find out where the intersection point is on the line.
+	t = (edge2 * q) * f;
+	if (t > eps) // ray intersection
+	{
+		return true;
+	}
+	else // This means that there is a line intersection but not a ray intersection.
+		return false;
 }
 
 
