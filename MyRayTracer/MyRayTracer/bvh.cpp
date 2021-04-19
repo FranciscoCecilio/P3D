@@ -41,6 +41,7 @@ void BVH::Build(vector<Object *> &objs) {
 			world_bbox.min.x -= EPSILON; world_bbox.min.y -= EPSILON; world_bbox.min.z -= EPSILON;
 			world_bbox.max.x += EPSILON; world_bbox.max.y += EPSILON; world_bbox.max.z += EPSILON;
 			root->setAABB(world_bbox);
+			root->makeNode(0);
 			nodes.push_back(root);
 			build_recursive(0, objects.size(), root); // -> root node takes all the 
 		}
@@ -69,6 +70,15 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 		int splitIndex;
 		// Split intersectables objects into left and right by finding a split_index
 		// Make sure that neither left nor right is completely empty
+		if (objects[left_index]->GetBoundingBox().centroid().getAxisValue(cmp.dimension) > midPoint ||
+			objects[right_index - 1]->GetBoundingBox().centroid().getAxisValue(cmp.dimension) <= midPoint) {
+			midPoint = 0;
+			for (splitIndex = left_index; splitIndex < right_index; splitIndex++) {
+				midPoint += objects[splitIndex]->GetBoundingBox().centroid().getAxisValue(cmp.dimension);
+			}
+			midPoint /= (right_index - left_index);
+		}
+
 		if (objects[left_index]->GetBoundingBox().centroid().getAxisValue(cmp.dimension) >= midPoint ||
 			objects[right_index - 1]->GetBoundingBox().centroid().getAxisValue(cmp.dimension) < midPoint) {
 			midPoint = 0;
@@ -171,9 +181,9 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 				}
 				// Else (Is leaf)
 				else {
-					float t;
+					float t = FLT_MAX;
 					// For each primitive in leaf perform intersection testing
-					for (int i = currentNode->getIndex(); i < currentNode->getIndex() + currentNode->getNObjs(); i++) {
+					for (int i = currentNode->getIndex(); i < currentNode->getNObjs(); i++) {
 						// Intersected = > update tclosest and store ClosestHit
 						if (objects[i]->intercepts(ray, t) && t < tmin) {
 							hit = true;
@@ -258,9 +268,9 @@ bool BVH::Traverse(Ray& ray) {  //shadow ray with length
 				}
 				// Else (Is leaf)
 				else {
-					float t;
+					float t = FLT_MAX;
 					// For each primitive in leaf perform intersection testing
-					for (int i = currentNode->getIndex(); i < currentNode->getIndex() + currentNode->getNObjs(); i++) {
+					for (int i = currentNode->getIndex(); i < currentNode->getNObjs(); i++) {
 						// Intersected => return true;
 						if (objects[i]->intercepts(ray, t)) {
 							return true;
