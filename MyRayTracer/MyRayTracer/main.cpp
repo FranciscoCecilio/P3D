@@ -37,8 +37,8 @@
 #define LJ 0.5 // Light Jitter
 #define SPP 1 // Samples Per Pixel
 #define DOF false // Depth Of Field
-#define GA false // Grid Acceleration
-#define BVHA true // Bounding Volume Hierarchy Acceleration
+#define GA true // Grid Acceleration
+#define BVHA false // Bounding Volume Hierarchy Acceleration
 #define SB true // SkyBox
 
 Grid grid;
@@ -64,7 +64,7 @@ long myTime, timebase = 0, frame = 0;
 char s[32];
 
 //Enable OpenGL drawing.  
-bool drawModeEnabled = false;
+bool drawModeEnabled = true;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 
@@ -241,7 +241,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 		Kr = 1 / 2 * (Rn + Rp);
 	}
 
-	color += rColor * Kr + tColor * (1 - Kr);
+	color += rColor * Kr * closestObject->GetMaterial()->GetSpecColor() + tColor * (1 - Kr);
 	color = color.clamp();
 	return color;
 }

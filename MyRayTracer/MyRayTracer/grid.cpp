@@ -29,7 +29,7 @@ Object* Grid::getObject(unsigned int index)
 
 // ---------------------------------------------setup_cells
 void Grid::Build(vector<Object*>& objs) {
-	printf("objs lenght: %d", objs.size());
+	//printf("objs lenght: %d", objs.size());
 	int xmin, xmax;
 	int ymin, ymax;
 	int zmin, zmax;
@@ -85,7 +85,7 @@ void Grid::Build(vector<Object*>& objs) {
 		int iymax = clamp((obb.max.y - bbox.min.y) * ny / (bbox.max.y - bbox.min.y), 0, ny - 1);
 		int izmax = clamp((obb.max.z - bbox.min.z) * nz / (bbox.max.z - bbox.min.z), 0, nz - 1);
 		
-		printf("obj num:%d min=( %d,%d,%d) max=( %d,%d,%d)\n", countera, ixmin, iymin, izmin, ixmax, iymax, izmax);
+		//printf("obj num:%d min=( %d,%d,%d) max=( %d,%d,%d)\n", countera, ixmin, iymin, izmin, ixmax, iymax, izmax);
 		countera++;
 		// add the object to the cells
 		for (int iz = izmin; iz <= izmax; iz++) 					// cells in z direction
@@ -94,7 +94,7 @@ void Grid::Build(vector<Object*>& objs) {
 					cells[ix + nx * iy + nx * ny * iz].push_back(obj);
 	}
 
-	printf("\nGRID: total cells = %d, total objects = %d, ResX = %d, ResY = %d, ResZ = %d\n\n", cellCount, this->getNumObjects(), nx, ny, nz);
+	//printf("\nGRID: total cells = %d, total objects = %d, ResX = %d, ResY = %d, ResZ = %d\n\n", cellCount, this->getNumObjects(), nx, ny, nz);
 	//Erase the vector that stores object pointers, but don't delete the objects
 	objects.erase(objects.begin(), objects.end());
 }
@@ -335,7 +335,7 @@ bool Grid::Traverse(Ray& ray) {
 		if (objs.size() != 0) 
 			//intersect Ray with all objects of each cell
 			for (auto &obj : objs) {
-				if (obj->intercepts(ray, distance) && distance < length) 
+				if (obj->intercepts(ray, distance) && distance < FLT_MAX) 
 					return true;
 			}
 		
