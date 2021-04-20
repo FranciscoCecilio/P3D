@@ -224,7 +224,7 @@ bool BVH::Traverse(Ray& ray) {  //shadow ray with length
 			float tmp;
 
 			double length = ray.direction.length(); //distance between light and intersection point
-			ray.direction.normalize();
+			if (length != 0) ray.direction.normalize();
 
 			BVHNode* currentNode = nodes[0];
 

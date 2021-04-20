@@ -39,29 +39,6 @@ Vector Triangle::getNormal(Vector point)
 //
 bool Triangle::intercepts(Ray& r, float& t)
 {
-	/** /
-	Vector v0v1 = points[1] - points[0];
-	Vector v0v2 = points[2] - points[0];
-	normal = v0v1 % v0v2;
-	Vector pvec = r.direction % (v0v2);
-	float det = v0v1 * (pvec);
-	if (det < EPSILON) return false;
-	// ray and triangle are parallel if det is close to 0
-	if (fabs(det) < EPSILON) return false;
-	float invDet = 1 / det;
-
-	Vector tvec = r.origin - points[0];
-	float u = tvec * (pvec) * invDet;
-	if (u < 0 || u > 1) return false;
-
-	Vector qvec = tvec % (v0v1);
-	float v = r.direction * (qvec) * invDet;
-	if (v < 0 || u + v > 1) return false;
-
-	t = v0v2 * (qvec) * invDet;
-
-	return true;
-	/**/
 	Vector v0v1 = points[1] - points[0];
 	Vector v0v2 = points[2] - points[0];
 	normal = v0v1 % v0v2;
@@ -140,6 +117,7 @@ Vector Plane::getNormal(Vector point)
 {
 	return PN;
 }
+
 
 bool Sphere::intercepts(Ray& r, float& t)
 {	

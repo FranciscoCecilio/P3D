@@ -35,7 +35,7 @@
 #define AA false // Anti-Aliasing
 #define SS false // Soft Shadows
 #define LJ 0.5 // Light Jitter
-#define SPP 2 // Samples Per Pixel
+#define SPP 1 // Samples Per Pixel
 #define DOF false // Depth Of Field
 #define GA false // Grid Acceleration
 #define BVHA true // Bounding Volume Hierarchy Acceleration
@@ -91,6 +91,7 @@ int RES_X, RES_Y;
 int WindowHandle = 0;
 
 
+int c = 0;
 Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool inside = false)  //index of refraction of medium 1 where the ray is travelling
 {
 	Color color = Color(0, 0, 0);
@@ -104,7 +105,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 	Vector hp;
 	Vector hpN;
 	Vector sp;
-	 if(GA && !BVHA) {//if grid
+	 if(GA && !BVHA) { // if grid
 		 intercepts = grid.Traverse(ray, &closestObject, hp);
 		 if (!intercepts) {
 			 if (SB) return scene->GetSkyboxColor(ray);
@@ -115,7 +116,7 @@ Color rayTracing(Ray ray, int depth, float ior_1, float offx, float offy, bool i
 		 sp = hp + hpN * EPSILON;
 	 }
 
-	 if (!GA && BVHA) {//if bvh
+	 if (!GA && BVHA) { // if bvh
 		 intercepts = bvh.Traverse(ray, &closestObject, hp);
 		 if (!intercepts) {
 			 if (SB) return scene->GetSkyboxColor(ray);
