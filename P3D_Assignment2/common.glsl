@@ -214,7 +214,7 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
     if(rec.material.type == MT_DIFFUSE)
     {
         vec3 S = rec.pos + rec.normal + normalize(randomInUnitSphere(gSeed));
-        rScattered = createRay(rec.pos, S);
+        rScattered = createRay((rec.pos+rec.normal*epsilon), S);
         atten = rec.material.albedo * max(dot(rScattered.d, rec.normal), 0.0) / pi;
         return true;
     }
@@ -245,20 +245,23 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         }
 
         //Use probabilistic math to decide if scatter a reflected ray or a refracted ray
-
-        float reflectProb;
-
+        float reflectProb = schlick(cosine, rec.material.refIdx);
         //if no total reflection  reflectProb = schlick(cosine, rec.material.refIdx);  
         //else reflectProb = 1.0;
-
-        if( hash1(gSeed) < reflectProb)  //Reflection
-        // rScattered = calculate reflected ray
-          // atten *= vec3(reflectProb); not necessary since we are only scattering reflectProb rays and not all reflected rays
+        vec3 v = rIn.d * -1.0f;
+        vec3 vn = outwardNormal * dot(v,outwardNormal);
+        if( hash1(gSeed) < reflectProb){
+            vec3 rr = (vn * 2.0f) - v;
+            rScattered = createRay((rec.pos+rec.normal*epsilon), rr);
+            //atten *= vec3(reflectProb); not necessary since we are only scattering reflectProb rays and not all reflected rays
         
-        //else  //Refraction
-        // rScattered = calculate refracted ray
-           // atten *= vec3(1.0 - reflectProb); not necessary since we are only scattering 1-reflectProb rays and not all refracted rays
-        //}
+        }   //Reflection
+        
+        else{
+            //rScattered = calculate refracted ray
+            // atten *= vec3(1.0 - reflectProb); not necessary since we are only scattering 1-reflectProb rays and not all refracted rays
+        
+        }   //Refraction
 
         return true;
     }
@@ -291,14 +294,40 @@ bool hit_triangle(Triangle tri, Ray r, float tmin, float tmax, out HitRecord rec
 {
     //INSERT YOUR CODE HERE
     //calculate a valid t and normal
+    /** /
     float t;
-    if(t < tmax && t > tmin)
-    {
-        rec.t = t;
-        //rec.normal = normal;
-        rec.pos = pointOnRay(r, rec.t);
-        return true;
-    }
+    vec3 v0v1, v0v2, h, s, q;
+    v0v1 = tri.b - tri.a;
+	v0v2 = tri.c - tri.a;
+	const float eps = 0.0000001f;
+	float a, f, u, v;
+
+	h = cross(r.d, v0v2);
+	a = dot(v0v1, h);
+	if (a > -eps && a < eps)
+		return false;    // This ray is parallel to this triangle.
+	f = 1.0f / a;
+	s = r.o - tri.a;
+	u = dot(s, h) * f;
+	if (u < 0.0f || u > 1.0f)
+		return false;
+	q = cross(s, v0v1);
+	v = dot(r.d, q) * f;
+	if (v < 0.0f || u + v > 1.0f)
+		return false;
+	// At this stage we can compute t to find out where the intersection point is on the line.
+	t = dot(v0v2, q) * f;
+	if (t > eps) // ray intersection
+	{
+		if(t < tmax && t > tmin)
+        {
+            rec.t = t;
+            rec.normal = cross(v0v1,v0v2);
+            rec.pos = pointOnRay(r, rec.t);
+            return true;
+        }
+	}
+    /**/
     return false;
 }
 
@@ -307,6 +336,7 @@ struct Sphere
 {
     vec3 center;
     float radius;
+    float SqRadius;
 };
 
 Sphere createSphere(vec3 center, float radius)
@@ -314,6 +344,7 @@ Sphere createSphere(vec3 center, float radius)
     Sphere s;
     s.center = center;
     s.radius = radius;
+    s.SqRadius = radius*radius;
     return s;
 }
 
@@ -351,13 +382,39 @@ vec3 center(MovingSphere mvsphere, float time)
 
 bool hit_sphere(Sphere s, Ray r, float tmin, float tmax, out HitRecord rec)
 {
-    //INSERT YOUR CODE HERE
-    //calculate a valid t and normal
-	float t;
+    float a, b, c, t, t0, t1;
+	a = dot(r.d, r.d);
+	b = dot(((r.o - s.center) * 2.0f), r.d);
+	c = dot((r.o - s.center), (r.o - s.center)) - s.SqRadius;
+
+    float disc = b * b - 4.0f * a * c;
+	if (disc < 0.0f) return false;
+	else if (disc == 0.0f) t0 = t1 = -0.5f * b / a;
+	else {
+		float q = (b > 0.0f) ?
+			-0.5 * (b + sqrt(disc)) : -0.5 * (b - sqrt(disc));
+		t0 = q / a;
+		t1 = c / q;
+	}
+	if (t0 > t1) {
+		disc = t0;
+		t0 = t1;
+		t1 = disc;
+	}
+    if (t0 > t1) {
+		a = t0;
+		t0 = t1;
+		t1 = a;
+	}
+	if (t0 < 0.0f) {
+		t0 = t1;
+		if (t0 < 0.0f) return false;
+	}
+	t = t0;
     if(t < tmax && t > tmin) {
         rec.t = t;
         rec.pos = pointOnRay(r, rec.t);
-        //rec.normal = normal
+        rec.normal = normalize(rec.pos - s.center);
         return true;
     }
     else return false;

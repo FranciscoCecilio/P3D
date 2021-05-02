@@ -168,9 +168,7 @@ vec3 directlighting(pointLight pl, Ray r, HitRecord rec){
     vec3 colorOut = vec3(0.0, 0.0, 0.0);
     float shininess;
     HitRecord dummy;
-
-   //INSERT YOUR CODE HERE
-    
+//TODO
 	return colorOut; 
 }
 
@@ -199,7 +197,8 @@ vec3 rayColor(Ray r)
             vec3 atten;
             if(scatter(r, rec, atten, scatterRay))
             {   
-                //  insert your code here
+                r = scatterRay;
+                throughput *= atten;
             }
         
         }
