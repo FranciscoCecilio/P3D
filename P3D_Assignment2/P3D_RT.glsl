@@ -192,6 +192,7 @@ vec3 directlighting(pointLight pl, Ray r, HitRecord rec){
             shininess = 200.;
     }
     colorOut += pl.color * (diffCol + specCol * pow(max(0., dot(halfwayVector, rec.normal)), shininess)); 
+
     /**/
     return colorOut; 
 }
@@ -212,7 +213,6 @@ vec3 rayColor(Ray r)
                 col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
                 col += directlighting(createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
                 col += directlighting(createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
-
                 //for instance: col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
             }
            
@@ -223,6 +223,12 @@ vec3 rayColor(Ray r)
             {   
                 r = scatterRay;
                 throughput *= atten;
+                /** /
+                float p = max(throughput.r, max(throughput.g, throughput.b));
+                if (hash1(gSeed) > p)
+                    //break;
+                throughput -= 1. / p;
+                /**/
             }
         
         }

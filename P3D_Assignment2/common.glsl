@@ -132,12 +132,19 @@ Ray getRay(Camera cam, vec2 pixel_sample)  //rnd pixel_sample viewport coordinat
     vec2 ls = cam.lensRadius * randomInUnitDisk(gSeed);  //ls - lens sample for DOF
     float time = cam.time0 + hash1(gSeed) * (cam.time1 - cam.time0);
     
-    //Calculate eye_offset and ray direction
-    vec3 target = vec3((gl_FragCoord.xy/iResolution.xy) * 2.0f -1.0f, 1.0f);
-    vec3 origin = cam.eye; //offset
-    vec3 direction = target - origin;
+    ls *= cam.lensRadius;
+    pixel_sample.x = cam.width * ((pixel_sample.x / iResolution.x) - 0.5f);
+    pixel_sample.y = cam.width * ((pixel_sample.y / iResolution.y) - 0.5f);
+    pixel_sample *= cam.focusDist;
 
-    return createRay(origin, normalize(direction), time);
+    vec3 up = cam.u * (pixel_sample.x - ls.x);
+    vec3 view = cam.v * (pixel_sample.y - ls.y);
+    vec3 normal = cam.n * (cam.focusDist * cam.planeDist);
+
+    vec3 offset = cam.eye + (cam.u * ls.x) + (cam.v * ls.y);
+    vec3 direction = normalize(up + view - normal);
+
+    return createRay(offset, normalize(direction), time);
 }
 
 // MT_ material type
@@ -215,8 +222,8 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
     {
         vec3 S = rec.pos + rec.normal + normalize(randomInUnitSphere(gSeed));
         rScattered = createRay((rec.pos+rec.normal*epsilon), S);
-        atten = rec.material.albedo * max(dot(rScattered.d, rec.normal), 0.0) / pi;
-        atten *= 0.1;
+        atten = rec.material.albedo * max(dot(rScattered.d, rec.normal), 0.0001) / pi;
+        atten = rec.material.albedo*0.01;
         return true;
     }
     if(rec.material.type == MT_METAL)
@@ -236,7 +243,8 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
     }
     if(rec.material.type == MT_DIALECTRIC)
     {
-        atten = rec.material.albedo;
+        //atten = rec.material.albedo;
+        atten = vec3(1.);
         vec3 outwardNormal;
         float niOverNt;
         float cosine;
@@ -258,17 +266,18 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         float reflectProb = schlick(cosine, rec.material.refIdx);
         //if no total reflection  reflectProb = schlick(cosine, rec.material.refIdx);  
         //else reflectProb = 1.0;
-        vec3 v = rIn.d * -1.0f;
-        vec3 vn = outwardNormal * dot(v,outwardNormal);
-        if( hash1(gSeed) < reflectProb){
-            vec3 rr = (vn * 2.0f) - v;
-            rScattered = createRay((rec.pos+rec.normal*epsilon), rr);
+
+        if(hash1(gSeed) < reflectProb){
+            vec3 reflR = reflect(rIn.d, outwardNormal);
+            rScattered = createRay((rec.pos+rec.normal*epsilon), reflR);
             //atten *= vec3(reflectProb); not necessary since we are only scattering reflectProb rays and not all reflected rays
         
         }   //Reflection
         
         else{
             //rScattered = calculate refracted ray
+            vec3 refrR = refract(rIn.d, outwardNormal, niOverNt);
+            rScattered = createRay((rec.pos-outwardNormal*epsilon), refrR);
             // atten *= vec3(1.0 - reflectProb); not necessary since we are only scattering 1-reflectProb rays and not all refracted rays
         
         }   //Refraction
@@ -304,7 +313,7 @@ bool hit_triangle(Triangle tri, Ray r, float tmin, float tmax, out HitRecord rec
 {
     //INSERT YOUR CODE HERE
     //calculate a valid t and normal
-    /** /
+    /**/
     float t;
     vec3 v0v1, v0v2, h, s, q;
     v0v1 = tri.b - tri.a;
@@ -332,7 +341,7 @@ bool hit_triangle(Triangle tri, Ray r, float tmin, float tmax, out HitRecord rec
 		if(t < tmax && t > tmin)
         {
             rec.t = t;
-            rec.normal = cross(v0v1,v0v2);
+            rec.normal = -cross(v0v1,v0v2);
             rec.pos = pointOnRay(r, rec.t);
             return true;
         }
