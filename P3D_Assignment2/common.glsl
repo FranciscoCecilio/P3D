@@ -216,11 +216,21 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
         vec3 S = rec.pos + rec.normal + normalize(randomInUnitSphere(gSeed));
         rScattered = createRay((rec.pos+rec.normal*epsilon), S);
         atten = rec.material.albedo * max(dot(rScattered.d, rec.normal), 0.0) / pi;
+        atten *= 0.1;
         return true;
     }
     if(rec.material.type == MT_METAL)
     {
         //INSERT CODE HERE, consider fuzzy reflections
+        //float doSpecular = (hash1(gSeed) < rec.material.roughness) ? 1.0f : 0.0f;
+        vec3 diffuseRayDir = normalize(rec.normal + hash1(gSeed));
+        vec3 specularRayDir = reflect(rIn.d, rec.normal);
+        specularRayDir = normalize(mix(specularRayDir, diffuseRayDir, rec.material.roughness * rec.material.roughness));
+        //rayDir = mix(diffuseRayDir, specularRayDir, doSpecular);
+        vec3 rayDir = mix(diffuseRayDir, specularRayDir, 1.);
+        //ret += rec.material.emissive * throughput;
+        //atten = mix(rec.material.albedo, rec.material.specularColor, doSpecular);
+        rScattered = createRay(rec.pos, rayDir);
         atten = rec.material.albedo;
         return true;
     }

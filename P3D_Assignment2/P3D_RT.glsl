@@ -168,8 +168,32 @@ vec3 directlighting(pointLight pl, Ray r, HitRecord rec){
     vec3 colorOut = vec3(0.0, 0.0, 0.0);
     float shininess;
     HitRecord dummy;
-//TODO
-	return colorOut; 
+    /**/
+    vec3 sp = rec.pos + rec.normal * 0.0001;
+    vec3 L = normalize(pl.pos - rec.pos);
+    Ray shadowRay = createRay(sp, L);
+    if (hit_world(shadowRay, 0.001, 10000.0, dummy)){
+        return colorOut;
+    }
+    vec3 halfwayVector = normalize(L - r.d);
+
+    switch(rec.material.type) {
+        case 0:
+            diffCol = rec.material.albedo;
+            specCol = vec3(0.1);
+            shininess = 10.;
+        case 1:
+            diffCol = vec3(0.0);
+            specCol = rec.material.albedo;
+            shininess = 500.;
+        case 2:
+            diffCol = vec3(0.0);
+            specCol = vec3(0.04);
+            shininess = 200.;
+    }
+    colorOut += pl.color * (diffCol + specCol * pow(max(0., dot(halfwayVector, rec.normal)), shininess)); 
+    /**/
+    return colorOut; 
 }
 
 #define MAX_BOUNCES 10
@@ -185,9 +209,9 @@ vec3 rayColor(Ray r)
         {
             //calculate direct lighting with 3 white point lights:
             {
-                //createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0))
-                //createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0))
-                //createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0))
+                col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                col += directlighting(createPointLight(vec3(8.0, 15.0, 3.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
+                col += directlighting(createPointLight(vec3(1.0, 15.0, -9.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
 
                 //for instance: col += directlighting(createPointLight(vec3(-10.0, 15.0, 0.0), vec3(1.0, 1.0, 1.0)), r, rec) * throughput;
             }
