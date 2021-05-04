@@ -373,6 +373,7 @@ struct MovingSphere
     vec3 center0, center1;
     float radius;
     float time0, time1;
+    float sqRadius;
 };
 
 MovingSphere createMovingSphere(vec3 center0, vec3 center1, float radius, float time0, float time1)
@@ -383,6 +384,7 @@ MovingSphere createMovingSphere(vec3 center0, vec3 center1, float radius, float 
     s.radius = radius;
     s.time0 = time0;
     s.time1 = time1;
+    s.sqRadius = radius*radius;
     return s;
 }
 
@@ -441,18 +443,46 @@ bool hit_sphere(Sphere s, Ray r, float tmin, float tmax, out HitRecord rec)
 
 bool hit_movingSphere(MovingSphere s, Ray r, float tmin, float tmax, out HitRecord rec)
 {
-    float B, C, delta;
+    float a, b, c, t, t0, t1, delta;
     bool outside;
-    float t;
-
-
+    s.time0 = s.time1;
+    s.time1 = r.t;
+    delta = s.time1 - s.time0;
+    vec3 movCenter = s.center0 + normalize(s.center1 - s.center0) * delta;
     //INSERT YOUR CODE HERE
     //Calculate the moving center
-    //calculate a valid t and normal
+	a = dot(r.d, r.d);
+	b = dot(((r.o - movCenter) * 2.0f), r.d);
+	c = dot((r.o - movCenter), (r.o - movCenter)) - s.sqRadius;
+
+    float disc = b * b - 4.0f * a * c;
+	if (disc < 0.0f) return false;
+	else if (disc == 0.0f) t0 = t1 = -0.5f * b / a;
+	else {
+		float q = (b > 0.0f) ?
+			-0.5 * (b + sqrt(disc)) : -0.5 * (b - sqrt(disc));
+		t0 = q / a;
+		t1 = c / q;
+	}
+	if (t0 > t1) {
+		disc = t0;
+		t0 = t1;
+		t1 = disc;
+	}
+    if (t0 > t1) {
+		a = t0;
+		t0 = t1;
+		t1 = a;
+	}
+	if (t0 < 0.0f) {
+		t0 = t1;
+		if (t0 < 0.0f) return false;
+	}
+	t = t0;
     if(t < tmax && t > tmin) {
         rec.t = t;
         rec.pos = pointOnRay(r, rec.t);
-        //rec.normal = normal;
+        rec.normal = normalize(rec.pos - movCenter);
         return true;
     }
     else return false;
