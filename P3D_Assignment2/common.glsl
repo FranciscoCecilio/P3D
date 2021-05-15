@@ -222,7 +222,7 @@ bool scatter(Ray rIn, HitRecord rec, out vec3 atten, out Ray rScattered)
     {
         vec3 S = rec.pos + rec.normal + normalize(randomInUnitSphere(gSeed));
         rScattered = createRay((rec.pos+rec.normal*epsilon), S);
-        atten = rec.material.albedo * max(dot(rScattered.d, rec.normal), 0.0001) / pi;
+        atten = rec.material.albedo * max(dot(rScattered.d, rec.normal), 0) / pi;
         atten = rec.material.albedo*0.01;
         return true;
     }
