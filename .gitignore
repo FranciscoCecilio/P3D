@@ -353,13 +353,13 @@ MigrationBackup/
 #
 # Get latest from https://github.com/github/gitignore/blob/master/Unity.gitignore
 #
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Bb]uild/
-/[Bb]uilds/
-/[Ll]ogs/
-/[Mm]emoryCaptures/
+Assignment3/[Ll]ibrary/
+Assignment3/[Tt]emp/
+Assignment3/[Oo]bj/
+Assignment3/[Bb]uild/
+Assignment3/[Bb]uilds/
+Assignment3/[Ll]ogs/
+Assignment3/[Mm]emoryCaptures/
 
 # Asset meta data should only be ignored when the corresponding asset is also ignored
 !/[Aa]ssets/**/*.meta
