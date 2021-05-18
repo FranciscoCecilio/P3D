@@ -7,6 +7,8 @@ public class CarMovement : MonoBehaviour
 {
     public int Speed; // Positive = North
 
+    private bool inside = false;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -25,5 +27,15 @@ public class CarMovement : MonoBehaviour
         {
             Destroy(gameObject);
         }
+        else if (other.CompareTag("Player") && !inside)
+        {
+            inside = true;
+            other.gameObject.GetComponent<PlayerCamera>().TakeLife();
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        inside = false;
     }
 }
