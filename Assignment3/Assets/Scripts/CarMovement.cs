@@ -30,7 +30,7 @@ public class CarMovement : MonoBehaviour
         else if (other.CompareTag("Player") && !inside)
         {
             inside = true;
-            other.gameObject.GetComponent<PlayerCamera>().TakeLife();
+            other.gameObject.GetComponent<PlayerController>().TakeLife();
         }
     }
 
