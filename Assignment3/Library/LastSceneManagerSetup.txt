@@ -1,5 +1,5 @@
 sceneSetups:
-- path: Assets/Scenes/Frogger high rez.unity
+- path: C:/Users/helio/OneDrive/Ambiente de Trabalho/BoatAttack-master/Assets/scenes/demo_Island.unity
   isLoaded: 1
   isActive: 1
   isSubScene: 0
