@@ -5,13 +5,21 @@ using UnityEngine;
 public class LogMovement : MonoBehaviour
 {
     public int speed;
-    public int cutoff;
-    public Vector3 spawn;
-    public bool backwards = false;
+    // public bool backwards = false;
+    // public int cutoff;
+    // public Vector3 spawn;
+
+    private int dir = -1;
 
     void Update()
     {
-        transform.position += new Vector3(speed*Time.deltaTime, 0, 0);
+        transform.position += new Vector3(speed*Time.deltaTime, /*dir*0.5f*Time.deltaTime*/0, 0);
+        if (transform.position.y < 18.5 || transform.position.y > 19)
+        {
+            dir *= -1;
+        }
+
+        /** /
         if (backwards)
         {
             if (transform.position.x >= cutoff)
@@ -26,11 +34,19 @@ public class LogMovement : MonoBehaviour
                 transform.position = spawn;
             }
         }
+        /**/
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        other.gameObject.transform.parent = gameObject.transform;
+        if (other.CompareTag("LogDestroyer"))
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            other.gameObject.transform.parent = gameObject.transform;
+        }
     }
 
     private void OnTriggerExit(Collider other)

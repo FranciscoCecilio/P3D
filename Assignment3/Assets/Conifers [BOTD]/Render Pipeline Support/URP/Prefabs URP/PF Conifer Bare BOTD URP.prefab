@@ -249,7 +249,7 @@ GameObject:
   - component: {fileID: 136397860403507302}
   m_Layer: 0
   m_Name: PF Conifer Bare BOTD URP
-  m_TagString: Untagged
+  m_TagString: Tree
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
