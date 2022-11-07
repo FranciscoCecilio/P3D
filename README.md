@@ -1,5 +1,5 @@
 # P3D
-For the Assignment 1, we implemented ray Tracing techniques plus two acceleration structures, but as described in the report they are not ideal to render scenes with lots of randomly spread positioned objects. 
+For the Assignment 1, we implemented ray Tracing techniques plus two acceleration structures, but as described in the report they are not ideal to render scenes with lots of randomly spread positioned objects. VIDEO LINK: https://www.youtube.com/shorts/JkVSCwLd0ig
 
 In Assignment 2, we have GLSL implementation of a Progressive Ray Tracer that allows the rendering of “embarrassingly parallel” scenes in a short time.
 
